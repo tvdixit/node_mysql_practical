@@ -7,8 +7,10 @@ router.post(
   taskController.upload.single("image"),
   taskController.createTask
 );
-router.get("/gettask", taskController.gettask);
+router.get("/gettask", taskController.getTask);
 
 router.get("/gettask/priority", taskController.getTasksByPriorityPagination);
+
+router.patch("/updatetask/:id", taskController.UpdateTask);
 
 module.exports = router;

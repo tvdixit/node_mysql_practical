@@ -1,8 +1,6 @@
 const Connection = require("../config/db");
 const Task = require("../Schema/taskSchema");
 const multer = require("multer");
-const mysql = require("mysql2");
-const fs = require("fs");
 const path = require("path");
 
 const storage = multer.diskStorage({
@@ -23,7 +21,7 @@ const createTask = (req, res) => {
     image: req.file.filename,
   };
   console.log(req.file);
-  console.log(req.body, "cratetask");
+  // console.log(req.body, "task");
   Task.createTask(task, (err, result) => {
     if (err) {
       res.status(400).json({
@@ -38,8 +36,9 @@ const createTask = (req, res) => {
     }
   });
 };
+//
 
-const gettask = (req, res) => {
+const getTask = (req, res) => {
   const sql = "SELECT * FROM task";
   Connection.query(sql, (err, results) => {
     if (err) {
@@ -55,85 +54,28 @@ const gettask = (req, res) => {
     }
   });
 };
-
-///
-
-// const getTasksByPriorityPagination = async (req, res) => {
-//   const page = parseInt(req.query.page) || 1;
-//   const limit = parseInt(req.query.limit) || 10;
-//   let priority = req.query.priority;
-//   const search = req.query.search || "";
-//   let is_completed = req.query.is_completed;
-//   let is_deleted = req.query.is_deleted;
-
-//   try {
-//     const allowedPriorities = ["high", "medium", "low"];
-//     if (!allowedPriorities.includes(priority)) {
-//       priority = "all";
-//     }
-//     const allowedOptions = ["0", "1"];
-//     if (!allowedOptions.includes(is_completed)) {
-//       is_completed = "all";
-//     }
-//     if (!allowedOptions.includes(is_deleted)) {
-//       is_deleted = "all";
-//     }
-
-//     let sql = `
-//       SELECT *
-//       FROM task
-//       WHERE 1 = 1
-//         ${priority !== "all" ? `AND priority = '${priority}'` : ""}
-//         ${
-//           is_completed === "0"
-//             ? " AND is_completed = 0"
-//             : is_completed === "1"
-//             ? " AND is_completed = 1"
-//             : ""
-//         }
-//         ${
-//           is_deleted === "0"
-//             ? " AND is_deleted = 0"
-//             : is_deleted === "1"
-//             ? " AND is_deleted = 1"
-//             : ""
-//         }
-//         ${search ? `AND name LIKE '%${search}%'` : ""}
-//       ORDER BY
-//         CASE
-//           WHEN priority = 'high' THEN 1
-//           WHEN priority = 'medium' THEN 2
-//           WHEN priority = 'low' THEN 3
-//           ELSE 4
-//         END
-//       LIMIT ${limit} OFFSET ${(page - 1) * limit}
-//     `;
-//     console.log(sql, "sql");
-//     const tasks = await new Promise((resolve, reject) => {
-//       Connection.query(sql, (err, result) => {
-//         if (err) {
-//           reject(err);
-//         } else {
-//           resolve(result);
-//         }
-//       });
-//     });
-
-//     res.json({
-//       tasks: tasks,
-//       page: page,
-//       limit: limit,
-//       search: search,
-//       priority: priority,
-//       is_completed: is_completed,
-//       is_deleted: is_deleted,
-//     });
-//   } catch (err) {
-//     res.status(500).json({ error: "Failed to fetch tasks" });
-//   }
-// };
-
 //
+
+const UpdateTask = (req, res) => {
+  const id = req.params.id;
+  const task = req.body;
+  // console.log(req.body);
+  const sql = "UPDATE task SET ? WHERE id = ?";
+  Connection.query(sql, [task, id], (err, result) => {
+    if (err) {
+      res.status(400).json({
+        message: "Error updating task",
+        error: err.message,
+      });
+    } else {
+      res.status(201).json({
+        message: "Task updated successfully",
+        result: result,
+      });
+    }
+  });
+};
+
 const getTasksByPriorityPagination = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -144,47 +86,20 @@ const getTasksByPriorityPagination = async (req, res) => {
 
   try {
     const allowedPriorities = ["high", "medium", "low"];
-    if (!allowedPriorities.includes(priority)) {
-      priority = "all";
-    }
+    priority = allowedPriorities.includes(priority) ? priority : "all";
+
     const allowedOptions = ["0", "1"];
-    if (!allowedOptions.includes(is_completed)) {
-      is_completed = "all";
-    }
-    if (!allowedOptions.includes(is_deleted)) {
-      is_deleted = "all";
-    }
+    is_completed = allowedOptions.includes(is_completed) ? is_completed : "all";
+    is_deleted = allowedOptions.includes(is_deleted) ? is_deleted : "all";
 
     let sql = `
-      SELECT *
-      FROM task
-      WHERE 1 = 1
-        ${priority !== "all" ? `AND priority = '${priority}'` : ""}
-        ${
-          is_completed === "0"
-            ? " AND is_completed = 0"
-            : is_completed === "1"
-            ? " AND is_completed = 1"
-            : ""
-        }
-        ${
-          is_deleted === "0"
-            ? " AND is_deleted = 0"
-            : is_deleted === "1"
-            ? " AND is_deleted = 1"
-            : ""
-        }
-        ${search ? `AND name LIKE '%${search}%'` : ""}
-      ORDER BY
-        CASE
-          WHEN priority = 'high' THEN 1
-          WHEN priority = 'medium' THEN 2
-          WHEN priority = 'low' THEN 3
-          ELSE 4
-        END
-      LIMIT ${limit} OFFSET ${(page - 1) * limit}
+      SELECT * FROM task WHERE 
+      ${priority !== "all" ? `priority = '${priority}'` : "1"}
+      AND
+      (is_completed = '${is_completed}' OR '${is_completed}' = 'all')
+      AND
+      (is_deleted = '${is_deleted}' OR '${is_deleted}' = 'all')
     `;
-    console.log(sql, "sql");
     const tasks = await new Promise((resolve, reject) => {
       Connection.query(sql, (err, result) => {
         if (err) {
@@ -194,9 +109,8 @@ const getTasksByPriorityPagination = async (req, res) => {
         }
       });
     });
-
     res.json({
-      tasks: tasks,
+      tasks: tasks.slice((page - 1) * limit, page * limit),
       page: page,
       limit: limit,
       search: search,
@@ -212,6 +126,7 @@ const getTasksByPriorityPagination = async (req, res) => {
 module.exports = {
   createTask,
   upload,
-  gettask,
+  getTask,
+  UpdateTask,
   getTasksByPriorityPagination,
 };
