@@ -1,7 +1,7 @@
 const express = require("express");
 const taskController = require("../controlller/taskController");
 const router = express.Router();
-
+const { auth } = require("../middleware/auth");
 router.post(
   "/createtask",
   taskController.upload.single("image"),
@@ -11,6 +11,6 @@ router.get("/gettask", taskController.getTask);
 
 router.get("/gettask/priority", taskController.getTasksByPriorityPagination);
 
-router.patch("/updatetask/:id", taskController.UpdateTask);
+router.patch("/updatetask", auth(), taskController.UpdateTask);
 
 module.exports = router;

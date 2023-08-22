@@ -4,7 +4,10 @@ const userRoutes = require("./routes/userRoute");
 const taskRoutes = require("./routes/taskRoute");
 
 const app = express();
+
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use(userRoutes);
 app.use(taskRoutes);
 

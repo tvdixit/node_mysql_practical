@@ -55,20 +55,34 @@ const getTask = (req, res) => {
   });
 };
 //
-
 const UpdateTask = (req, res) => {
-  const id = req.params.id;
-  const task = req.body;
-  // console.log(req.body);
-  const sql = "UPDATE task SET ? WHERE id = ?";
-  Connection.query(sql, [task, id], (err, result) => {
+  const user_id = req.user.user_id;
+  console.log(user_id);
+  const sql =
+    "UPDATE task SET name = ?, description = ?, priority = ?, is_completed = ?, is_deleted = ? WHERE user_id = ?";
+
+  const values = [
+    req.body.name,
+    req.body.description,
+    req.body.priority,
+    req.body.is_completed,
+    req.body.is_deleted,
+    user_id,
+  ];
+
+  Connection.query(sql, values, (err, result) => {
     if (err) {
-      res.status(400).json({
+      console.error(err);
+      res.status(500).json({
         message: "Error updating task",
         error: err.message,
       });
+    } else if (result.affectedRows === 0) {
+      res.status(403).json({
+        message: "You are not authorized to update this task.",
+      });
     } else {
-      res.status(201).json({
+      res.status(200).json({
         message: "Task updated successfully",
         result: result,
       });
