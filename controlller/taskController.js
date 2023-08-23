@@ -1,60 +1,40 @@
 const Connection = require("../config/db");
+const i18n = require("i18n");
 const Task = require("../Schema/taskSchema");
-const multer = require("multer");
-const path = require("path");
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
+const { taskQuery } = require("../services/taskPaginationQuery");
 
 const createTask = (req, res) => {
   const task = {
     ...req.body,
     image: req.file.filename,
   };
-  console.log(req.file);
-  // console.log(req.body, "task");
   Task.createTask(task, (err, result) => {
     if (err) {
-      res.status(400).json({
-        message: "Error creating task",
-        error: err.message,
-      });
+      const errorMessage = req.__("Error creating task");
+      res.status(400).json({ message: errorMessage, error: err.message });
     } else {
-      res.status(201).json({
-        message: "Task created successfully",
-        result: result,
-      });
+      const successMessage = req.__("Task created successfully");
+      res.status(201).json({ message: successMessage, result: result });
     }
   });
 };
-//
-
+//Get ALL Task
 const getTask = (req, res) => {
+  req.setLocale("fr");
   const sql = "SELECT * FROM task";
   Connection.query(sql, (err, results) => {
     if (err) {
-      res.status(400).json({
-        message: "Error creating user",
-        error: err.message,
-      });
+      const errorMessage = req.__("Error creating user");
+      res.status(400).json({ message: errorMessage, error: err.message });
     } else {
-      res.status(201).json({
-        message: "User created successfully",
-        result: results,
-      });
+      const successMessage = req.__("Tasks Recieved successfully");
+      res.status(201).json({ message: successMessage, result: results });
+      console.log(successMessage);
     }
+    console.log();
   });
 };
-//
+//Update Task by userToken :
 const UpdateTask = (req, res) => {
   const user_id = req.user.user_id;
   console.log(user_id);
@@ -73,23 +53,21 @@ const UpdateTask = (req, res) => {
   Connection.query(sql, values, (err, result) => {
     if (err) {
       console.error(err);
-      res.status(500).json({
-        message: "Error updating task",
-        error: err.message,
-      });
+      res
+        .status(500)
+        .json({ message: "Error updating task", error: err.message });
     } else if (result.affectedRows === 0) {
-      res.status(403).json({
-        message: "You are not authorized to update this task.",
-      });
+      res
+        .status(403)
+        .json({ message: "You are not authorized to update this task." });
     } else {
-      res.status(200).json({
-        message: "Task updated successfully",
-        result: result,
-      });
+      res
+        .status(200)
+        .json({ message: "Task updated successfully", result: result });
     }
   });
 };
-
+// Task Pagination :
 const getTasksByPriorityPagination = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -106,16 +84,14 @@ const getTasksByPriorityPagination = async (req, res) => {
     is_completed = allowedOptions.includes(is_completed) ? is_completed : "all";
     is_deleted = allowedOptions.includes(is_deleted) ? is_deleted : "all";
 
-    let sql = `
-      SELECT * FROM task WHERE 
-      ${priority !== "all" ? `priority = '${priority}'` : "1"}
-      AND
-      (is_completed = '${is_completed}' OR '${is_completed}' = 'all')
-      AND
-      (is_deleted = '${is_deleted}' OR '${is_deleted}' = 'all')
-    `;
+    let sql = await taskQuery(
+      priority,
+      is_completed,
+      is_deleted,
+      req.user.user_id
+    );
     const tasks = await new Promise((resolve, reject) => {
-      Connection.query(sql, (err, result) => {
+      Connection.query(sql, [req.user.user_id], (err, result) => {
         if (err) {
           reject(err);
         } else {
@@ -131,6 +107,7 @@ const getTasksByPriorityPagination = async (req, res) => {
       priority: priority,
       is_completed: is_completed,
       is_deleted: is_deleted,
+      user_id: req.user.user_id,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch tasks" });
@@ -139,7 +116,6 @@ const getTasksByPriorityPagination = async (req, res) => {
 
 module.exports = {
   createTask,
-  upload,
   getTask,
   UpdateTask,
   getTasksByPriorityPagination,

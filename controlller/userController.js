@@ -2,8 +2,8 @@ const Connection = require("../config/db");
 const User = require("../Schema/userschema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const SecretKey = "yourSecretKey";
-
+const dotenv = require("dotenv");
+dotenv.config();
 // CreateUser api :
 const createUser = async (req, res) => {
   const existingUser = `SELECT * FROM user WHERE email = ?`;
@@ -34,25 +34,19 @@ const createUser = async (req, res) => {
     });
   });
 };
-
-//Get User API
+//Get User API :
 const getuser = (req, res) => {
   const sql = "SELECT * FROM user";
   Connection.query(sql, (err, results) => {
     if (err) {
-      res.status(400).json({
-        message: "Error creating user",
-        error: err.message,
-      });
+      const errorMessage = req.__("Error fetching users");
+      res.status(400).json({ message: errorMessage, error: err.message });
     } else {
-      res.status(201).json({
-        message: "User created successfully",
-        result: results,
-      });
+      const successMessage = req.__("Users fetched successfully");
+      res.status(200).json({ message: successMessage, result: results });
     }
   });
 };
-
 // Login Api :
 const Login = (req, res) => {
   const { email, password } = req.body;
@@ -70,7 +64,7 @@ const Login = (req, res) => {
         if (!isPasswordMatch) {
           res.status(401).json({ message: "password not match" });
         }
-        const token = jwt.sign({ userId: user.id }, SecretKey, {
+        const token = jwt.sign({ userId: user.id }, process.env.SecretKey, {
           expiresIn: "24h",
         });
         res.status(200).json({ status: true, auth: token });
