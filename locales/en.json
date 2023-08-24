@@ -1,1 +1,5 @@
-{}
+{
+	"Users fetched successfully": "Users fetched successfully",
+	"Tasks Recieved successfully": "Tasks Recieved successfully",
+	"Error creating user": "Error creating user"
+}

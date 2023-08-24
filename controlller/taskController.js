@@ -19,8 +19,29 @@ const createTask = (req, res) => {
   });
 };
 //Get ALL Task
+// const getTask = (req, res) => {
+//   const sql = "SELECT * FROM task";
+//   Connection.query(sql, (err, results) => {
+//     if (err) {
+//       const errorMessage = req.__("Error creating user");
+//       res.status(400).json({ message: errorMessage, error: err.message });
+//     } else {
+//       const successMessage = req.__("Tasks Recieved successfully");
+//       res.status(201).json({ message: successMessage, result: results });
+//       console.log(successMessage);
+//     }
+//     console.log();
+//   });
+// };
+
 const getTask = (req, res) => {
-  req.setLocale("fr");
+  const lang = req.query.lang;
+
+  if (lang === "fr") {
+    req.setLocale("fr");
+  } else {
+    req.setLocale("en");
+  }
   const sql = "SELECT * FROM task";
   Connection.query(sql, (err, results) => {
     if (err) {
@@ -31,9 +52,31 @@ const getTask = (req, res) => {
       res.status(201).json({ message: successMessage, result: results });
       console.log(successMessage);
     }
-    console.log();
   });
 };
+//
+const gettaskByJoin = (req, res) => {
+  const lang = req.query.lang;
+
+  if (lang === "fr") {
+    req.setLocale("fr");
+  } else {
+    req.setLocale("en");
+  }
+  const sql =
+    "SELECT user.first_name, user.email, task.name, task.description, task.due_date, task.priority, task.is_completed FROM user INNER JOIN task ON task.user_id = user.id ORDER BY task.priority";
+  Connection.query(sql, (err, results) => {
+    if (err) {
+      const errorMessage = req.__("Error creating user");
+      res.status(400).json({ message: errorMessage, error: err.message });
+    } else {
+      const successMessage = req.__("Tasks Recieved successfully");
+      res.status(201).json({ message: successMessage, result: results });
+      console.log(successMessage);
+    }
+  });
+};
+
 //Update Task by userToken :
 const UpdateTask = (req, res) => {
   const user_id = req.user.user_id;
@@ -117,6 +160,7 @@ const getTasksByPriorityPagination = async (req, res) => {
 module.exports = {
   createTask,
   getTask,
+  gettaskByJoin,
   UpdateTask,
   getTasksByPriorityPagination,
 };

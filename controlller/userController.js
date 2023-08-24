@@ -36,6 +36,13 @@ const createUser = async (req, res) => {
 };
 //Get User API :
 const getuser = (req, res) => {
+  const lang = req.query.lang;
+
+  if (lang === "fr") {
+    req.setLocale("fr");
+  } else {
+    req.setLocale("en");
+  }
   const sql = "SELECT * FROM user";
   Connection.query(sql, (err, results) => {
     if (err) {

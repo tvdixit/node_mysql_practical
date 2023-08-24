@@ -6,7 +6,7 @@ const app = express();
 
 i18n.configure({
   locales: ["en", "fr"],
-  defaultLocale: "fr",
+  defaultLocale: "en",
   directory: __dirname + "/locales",
   queryParameter: "lang",
   register: global,
@@ -19,7 +19,12 @@ app.use(i18n.init);
 app.use(
   "/user",
   (req, res, next) => {
-    i18n.setLocale(req, "fr");
+    const lang = req.query.lang;
+    if (i18n.getLocales().includes(lang)) {
+      i18n.setLocale(req, lang);
+    } else {
+      i18n.setLocale(req, "en");
+    }
     next();
   },
   cresteUser.route
@@ -27,7 +32,12 @@ app.use(
 app.use(
   "/task",
   (req, res, next) => {
-    req.setLocale(req, "fr");
+    const lang = req.query.lang;
+    if (i18n.getLocales().includes(lang)) {
+      i18n.setLocale(req, lang);
+    } else {
+      i18n.setLocale(req, "en");
+    }
     next();
   },
   createTask.route
