@@ -1,6 +1,7 @@
 const Connection = require("../config/db");
 const User = require("../Schema/userschema");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -35,7 +36,7 @@ const createUser = async (req, res) => {
   });
 };
 //Get User API :
-const getuser = (req, res) => {
+const getuser = async(req, res) => {
   const lang = req.query.lang;
 
   if (lang === "fr") {
@@ -55,7 +56,7 @@ const getuser = (req, res) => {
   });
 };
 // Login Api :
-const Login = (req, res) => {
+const Login = async(req, res) => {
   const { email, password } = req.body;
   const sql = "SELECT * FROM user WHERE email = ?";
 
@@ -81,9 +82,37 @@ const Login = (req, res) => {
     }
   });
 };
+//SendMail API :
 
+const sendMail = async (req, res) => {
+  try {
+    var transport = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: "69e8658f43e3f2",
+        pass: "a91378d3463dd6"
+      }
+    });
+
+    let info = await transport.sendMail({
+      from: 'test@yopmail.com',
+      to: req.body.email,
+      subject: "check-in-Text",
+      text: req.body.text,
+      html: "<b>check in Text</b>",
+    });
+
+    console.log("Message sent: %s", info.messageId);
+    res.json({ message: "Email sent successfully", messageId: info.messageId });
+  } catch (error) {
+    console.error("Error sending email:", error);
+    res.status(500).json({ error: "An error occurred while sending the email" });
+  }
+};
 module.exports = {
   createUser,
   getuser,
   Login,
+  sendMail
 };

@@ -3,6 +3,8 @@ const bodyParser = require("body-parser");
 const i18n = require("i18n");
 const { cresteUser, createTask } = require("./routes/index");
 const app = express();
+app.set('view engine', 'ejs');
+app.set('views', './view');
 
 i18n.configure({
   locales: ["en", "fr"],

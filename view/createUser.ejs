@@ -1,0 +1,86 @@
+<html>
+  <head>
+    <title>Create User</title>
+  </head>
+
+  <body style="background-color: burlywood">
+    <h1>Create User</h1>
+
+    <form method="post" action="/user/createuser" id="createUserForm">
+      <label for="first_name">First Name:</label>
+      <input type="text" name="first_name" id="first_name" />
+      <br />
+      <label for="last_name">Last Name:</label>
+      <input type="text" name="last_name" id="last_name" />
+      <br />
+      <label for="email">Email:</label>
+      <input type="email" name="email" id="email" />
+      <br />
+      <label for="password">Password:</label>
+      <input type="password" name="password" id="password" />
+      <br />
+      <button type="submit">Create User</button>
+    </form>
+    <div id="errorMessage" style="color: red"></div>
+    <script>
+      const createUserForm = document.getElementById("createUserForm");
+      createUserForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(createUserForm);
+        const userData = {
+          first_name: formData.get("first_name"),
+          last_name: formData.get("last_name"),
+          email: formData.get("email"),
+          password: formData.get("password"),
+        };
+        try {
+          const response = await fetch("/user/createuser", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userData),
+          });
+          const data = await response.json();
+          if (response.ok) {
+            console.log(data.user_id);
+            localStorage.setItem("authToken", data.auth);
+            localStorage.setItem("user_id", data.user_id);
+            // window.location.href = "/task/createtask/form";
+
+      var transport = nodemailer.createTransport({
+        host: "sandbox.smtp.mailtrap.io",
+        port: 2525,
+        auth: {
+        user: "69e8658f43e3f2",
+        pass: "a91378d3463dd6"
+      }
+    });
+      
+
+      const mailOptions = {
+        from: 'dixit@yopmail.com',
+        to: data.email, 
+        subject: 'User Registration Confirmation',
+        text: `Thank you for registering as ${data.first_name} ${data.last_name}. Your user ID is ${data.user_id}.`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email:', error);
+        } else {
+          console.log('Email sent:', info.response);
+        }
+      })
+
+          } else {
+            errorMessage.textContent = data.message;
+          }
+          console.log(data.auth);
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      });
+    </script>
+  </body>
+</html>
