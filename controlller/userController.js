@@ -6,6 +6,37 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 // CreateUser api :
+// const createUser = async (req, res) => {
+//   const existingUser = `SELECT * FROM user WHERE email = ?`;
+
+//   Connection.query(existingUser, [req.body.email], async (err, results) => {
+//     const countData = results.length;
+//     if (countData > 0) {
+//       return res.status(409).json({ message: "Email is already taken." });
+//     }
+//     const saltRounds = 10;
+//     const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+//     const user = {
+//       ...req.body,
+//       password: hashedPassword,
+//     };
+//     User.createUser(user, (err, result) => {
+//       if (err) {
+//         res.status(400).json({
+//           message: "Error creating user",
+//           error: err.message,
+//         });
+//       } else {
+//         res.status(201).json({
+//           message: "User created successfully",
+//           result: result,
+//         });
+//       }
+//     });
+//   });
+// };
+
+
 const createUser = async (req, res) => {
   const existingUser = `SELECT * FROM user WHERE email = ?`;
 
@@ -20,21 +51,51 @@ const createUser = async (req, res) => {
       ...req.body,
       password: hashedPassword,
     };
-    User.createUser(user, (err, result) => {
+    User.createUser(user, async (err, result) => {
       if (err) {
         res.status(400).json({
           message: "Error creating user",
           error: err.message,
         });
       } else {
-        res.status(201).json({
-          message: "User created successfully",
-          result: result,
-        });
+        try {
+          const transport = nodemailer.createTransport({
+            host: "sandbox.smtp.mailtrap.io",
+            port: 2525,
+            auth: {
+              user: "69e8658f43e3f2",
+              pass: "a91378d3463dd6"
+            }
+          });
+
+          const mailOptions = {
+            from: 'test@yopmail.com',
+            to: req.body.email,
+            subject: "User Registration Confirmation",
+            text: `Thank you for registering as ${user.first_name} ${user.last_name}. Your user ID is ${result.insertId}.`,
+            html: `<p>Thank you for registering as ${user.first_name} ${user.last_name}. Your user ID is ${result.insertId}.</p>`,
+          };
+
+          const info = await transport.sendMail(mailOptions);
+
+          console.log("Message sent: %s", info.messageId);
+          res.status(201).json({
+            message: "User created successfully. Email sent.",
+            result: result,
+            emailMessage: info.messageId,
+          });
+        } catch (error) {
+          console.error("Error sending email:", error);
+          res.status(500).json({ error: "An error occurred while sending the email" });
+        }
       }
     });
   });
 };
+
+
+
+
 //Get User API :
 const getuser = async(req, res) => {
   const lang = req.query.lang;

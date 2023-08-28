@@ -23,6 +23,7 @@
     </form>
     <div id="errorMessage" style="color: red"></div>
     <script>
+      console.log("hello world");
       const createUserForm = document.getElementById("createUserForm");
       createUserForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -33,6 +34,7 @@
           email: formData.get("email"),
           password: formData.get("password"),
         };
+        console.log(userData, "userData");
         try {
           const response = await fetch("/user/createuser", {
             method: "POST",
@@ -47,32 +49,6 @@
             localStorage.setItem("authToken", data.auth);
             localStorage.setItem("user_id", data.user_id);
             // window.location.href = "/task/createtask/form";
-
-      var transport = nodemailer.createTransport({
-        host: "sandbox.smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-        user: "69e8658f43e3f2",
-        pass: "a91378d3463dd6"
-      }
-    });
-      
-
-      const mailOptions = {
-        from: 'dixit@yopmail.com',
-        to: data.email, 
-        subject: 'User Registration Confirmation',
-        text: `Thank you for registering as ${data.first_name} ${data.last_name}. Your user ID is ${data.user_id}.`,
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error('Error sending email:', error);
-        } else {
-          console.log('Email sent:', info.response);
-        }
-      })
-
           } else {
             errorMessage.textContent = data.message;
           }
